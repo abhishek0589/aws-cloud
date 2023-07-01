@@ -1,10 +1,12 @@
+-- filter patterns like errors, case insensitive
 
 fields @timestamp, @message
 | filter @message like /(?i)error/
 | sort @timestamp desc
 | limit 10000
 
-
+-- if message emitted is not a json, parse message based on regex
+  
 fields @timestamp, @message
 | parse @message "[*] *" as loggingType, loggingMessage
 | filter @loggingType = "ERROR"
@@ -14,14 +16,7 @@ fields @timestamp, @message
 
 2022-09-20 23:39:18.070 ERROR 73f9d048-62d5-4bf1-8014-c404b46fb4d5 --- [ main] c.l.p.s.i.m.MediaMapper : The following record has invalid columns: Thumb_Mobile, D75720005-alt1-Thumb_Mobile, NULL, null, null, null
 
-
-
-fields @timestamp, @message
-| filter @message like /(?i)error/
-| sort @timestamp desc
-| limit 10000
-
-
+-- error count per hour
 fields @timestamp, @message
 | filter @message like /(?i)error/
 | stats count(*) as exceptionCount by bin(1h)
@@ -31,9 +26,8 @@ fields @timestamp, @message
 
 fields @timestamp, @message
 | filter @message like /Trying to consumer benefits for request BenefitConsumeRequest/
-| filter @message like /16fa7268-14ba-461f-8b19-a48b8fb27d1e/
-| PARSE @message "hybrisUserId='*', userPromoGroups=[*]" as hybrisUserId, userPromoGroups
-| DISPLAY @timestamp, hybrisUserId, userPromoGroups
+| PARSE @message "userid='*', groups=[*]" as userid, groups
+| DISPLAY @timestamp, userid, userPromoGroups
 | sort @timestamp desc 
 
 
@@ -56,9 +50,6 @@ fields @timestamp, @message
 
 
 2022-09-20 22:19:50.215 ERROR f6d81177-cd6e-4290-a5d3-d59c9910dc4f --- [           main] .p.s.i.m.BadgesAndGroupsMapper : Could not parse date. Unknown format: 05/02/2022 12:00:00 PST.
-
-
-
 
 
 fields @timestamp, @message
@@ -119,19 +110,10 @@ fields @timestamp, @message
 
 
 
-fields @timestamp, @message | filter @message like /Trying to consumer benefits for request BenefitConsumeRequest/ | filter @message like /6a570eab-e564-436c-af35-2abb3eead601|50396cfd-5ad6-4e52-b14f-ea6f807186e6|f3b0b101-87bc-443b-80c4-88c8c4c9caad|bfe14c98-8a7c-4ece-9e54-deae37f418a0/ | PARSE @message "hybrisUserId='', userPromoGroups=[]" as hybrisUserId, userPromoGroups | DISPLAY @timestamp, hybrisUserId, userPromoGroups | sort @timestamp desc
-
-
-
-fields @timestamp, @message | filter @message like /Trying to consumer benefits for request BenefitConsumeRequest/ | filter @message like /6a570eab-e564-436c-af35-2abb3eead601|50396cfd-5ad6-4e52-b14f-ea6f807186e6|f3b0b101-87bc-443b-80c4-88c8c4c9caad|bfe14c98-8a7c-4ece-9e54-deae37f418a0/ | PARSE @message "hybrisUserId='', userPromoGroups=[]" as hybrisUserId, userPromoGroups | DISPLAY @timestamp, hybrisUserId, userPromoGroups | sort @timestamp desc
-
+fields @timestamp, @message | filter @message like /Trying to consumer benefits for request BenefitConsumeRequest/ | filter @message like /6a570eab-e564-436c-af35-2abb3eead601|50396cfd-5ad6-4e52-b14f-ea6f807186e6|f3b0b101-87bc-443b-80c4-88c8c4c9caad|bfe14c98-8a7c-4ece-9e54-deae37f418a0/ | PARSE @message "userid='', userPromoGroups=[]" as userid, userPromoGroups | DISPLAY @timestamp, userid, userPromoGroups | sort @timestamp desc
+fields @timestamp, @message | filter @message like /Trying to consumer benefits for request BenefitConsumeRequest/ | filter @message like /6a570eab-e564-436c-af35-2abb3eead601|50396cfd-5ad6-4e52-b14f-ea6f807186e6|f3b0b101-87bc-443b-80c4-88c8c4c9caad|bfe14c98-8a7c-4ece-9e54-deae37f418a0/ | PARSE @message "userid='', userPromoGroups=[]" as userid, userPromoGroups | DISPLAY @timestamp, userid, userPromoGroups | sort @timestamp desc
 filter @message like /NOT_FOUND/ | parse @message "Request source [*] :: Returning * response for *" as sourceApp, notFound, resource | fields strcontains(resource, "getbenefits for user") as @getBenefits, strcontains(resource, "fetching user promo groups") as @promoGroups, strcontains(resource, "finding Preferences for user") as @preferences | stats sum(@getBenefits) as getBenefitsCount, sum(@promoGroups) as promoGroupsCount, sum(@preferences) as preferencesCount by sourceApp
-
-https://us-west-2.console.aws.amazon.com/cloudwatch/home?region=us-west-2#logsV2:logs-insights$3FqueryDetail$3D$257E$2528end$257E0$257Estart$257E-3600$257EtimeType$257E$2527RELATIVE$257Eunit$257E$2527seconds$257EeditorString$257E$2527fields*20*40timestamp*2c*20*40message*0a*7c*20sort*20*40timestamp*20desc*0a*7c*20limit*2020$257EisLiveTail$257Efalse$257EqueryId$257E$2527b26ee799-6d21-4c2e-9cc0-04bac56451f6$257Esource$257E$2528$257E$2527*2fecs*2finventory-acc-api*2fprod$2529$2529
-
-
 fields @timestamp, @message | filter @message like /v1/ | sort @timestamp desc
-
 fields @timestamp, @message | filter @message like /\/v1\/levi\/inventory\?countryCode/ | parse @message "countryCode=*&itemId=*&itemType=*&location=*&offset=*status=*bytes-sent=*duration=*" as country, item, type, location,offset, statys, bytes, duration | sort @timestamp desc
 
 
@@ -165,15 +147,9 @@ fields @timestamp, @message
 | sort @timestamp desc
 | limit 10000
 
-
-
-
-
-
-
+  
 
 Kafka Connect JDBC connector
-
 
 fields @timestamp, @message
 | filter @message like /About to send /
